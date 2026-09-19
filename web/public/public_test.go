@@ -85,6 +85,39 @@ func TestEmbeddedDistDoesNotEmbedRawFiles(t *testing.T) {
 	}
 }
 
+func TestAdminIndexDoesNotRegisterRootServiceWorker(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	t.Chdir(t.TempDir())
+
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("open config db: %v", err)
+	}
+	config.SetDb(db)
+	if err := config.Set(config.ThemeKey, DefaultTheme); err != nil {
+		t.Fatalf("set default theme: %v", err)
+	}
+
+	router := gin.New()
+	Static(router.Group("/"), func(handlers ...gin.HandlerFunc) {
+		router.NoRoute(handlers...)
+	})
+
+	request := httptest.NewRequest("GET", "/admin/settings", nil)
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, request)
+	if recorder.Code != 200 {
+		t.Fatalf("admin index status = %d, want 200", recorder.Code)
+	}
+	body, err := io.ReadAll(recorder.Result().Body)
+	if err != nil {
+		t.Fatalf("read admin index: %v", err)
+	}
+	if strings.Contains(string(body), `vite-plugin-pwa:register-sw`) {
+		t.Fatal("admin index registers a root-scoped service worker")
+	}
+}
+
 func TestStaticRestrictedDoesNotServeCustomAssetOverride(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	t.Chdir(t.TempDir())

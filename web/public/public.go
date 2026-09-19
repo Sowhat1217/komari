@@ -222,7 +222,11 @@ func static(r *gin.RouterGroup, noRoute func(handlers ...gin.HandlerFunc), force
 		}
 
 		htmlStr := string(content)
-		if forceDefaultTheme {
+		// Admin and terminal pages always use the embedded frontend. Do not let
+		// that frontend register its root-scoped service worker while a custom
+		// public theme is active: it can later serve cached default-theme HTML for
+		// `/` and make a hard refresh appear to switch the public theme back.
+		if forceDefaultTheme || !shouldReplace {
 			htmlStr = stripServiceWorkerRegistration(htmlStr)
 		}
 		if language, err := c.Cookie(LanguageCookieName); err == nil {
