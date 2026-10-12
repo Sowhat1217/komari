@@ -136,6 +136,10 @@ jobs:
       - name: Install Zig cross-compiler toolchain
         uses: ./.github/actions/setup-zig
 
+      - name: Test frontend compatibility and custom theme routing
+        if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
+        run: go test -v ./web/public ./web/rpc/jsonrpc
+
       - name: Build binary
         env:
           GOOS: ${{ matrix.goos }}

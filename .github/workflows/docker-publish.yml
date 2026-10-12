@@ -42,6 +42,9 @@ jobs:
       - name: Install Zig
         uses: ./.github/actions/setup-zig
 
+      - name: Test frontend compatibility and custom theme routing
+        run: go test -v ./web/public ./web/rpc/jsonrpc
+
       - name: Build static binaries for multi-arch
         env:
           GOOS: linux
